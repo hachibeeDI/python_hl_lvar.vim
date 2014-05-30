@@ -20,6 +20,7 @@ NeoBundleLazy 'hachibeeDI/python_hl_lvar.vim', {
 \     'filetypes' : ['python'],
 \   },
 \ }
+let g:enable_python_hl_lvar = 1
 autocmd BufWinEnter  *.py PyHlLVar
 autocmd BufWinLeave  *.py PyHlLVar
 autocmd WinEnter     *.py PyHlLVar

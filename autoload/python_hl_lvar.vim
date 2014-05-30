@@ -92,7 +92,11 @@ function! python_hl_lvar#funcpos()
 endfunction
 
 
+"let g:enable_python_hl_lvar
+
 function! python_hl_lvar#hl_lvar()
+  if !exists("g:enable_python_hl_lvar")
+    return
   let range_pos = python_hl_lvar#funcpos()
   let funcdef = getline(range_pos[1][1], range_pos[2][1])
 python << EOF
