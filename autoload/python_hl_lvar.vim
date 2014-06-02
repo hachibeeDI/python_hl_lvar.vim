@@ -95,8 +95,9 @@ endfunction
 "let g:enable_python_hl_lvar
 
 function! python_hl_lvar#hl_lvar()
-  if !exists("g:enable_python_hl_lvar")
+  if !g:enable_python_hl_lvar
     return
+  endif
   let range_pos = python_hl_lvar#funcpos()
   let funcdef = getline(range_pos[1][1], range_pos[2][1])
 python << EOF
@@ -124,27 +125,52 @@ def extract_assignment(funcdef_lines):
 
 
 try:
-  func_def_lines = vim.eval('l:funcdef')
-  assignments = extract_assignment(func_def_lines)
-  vim.command('let result = "{0}"'.format(' '.join(assignments)))
+    func_def_lines = vim.eval('l:funcdef')
+    assignments = extract_assignment(func_def_lines)
+    cmd = 'let b:result = {0}'.format(repr(assignments))
+    vim.command(cmd)
+    #vim.command('let b:result = '.format(assignments))
 except Exception as e:
-  # TODO: debug part
-  print e
+    # TODO: debug part
+    print e
+    vim.command('let b:result = []')
 EOF
 
-  if result != ''
-    call s:add_highlight(result)
+  call python_hl_lvar#redraw(b:result)
+endfunction
+
+
+function! python_hl_lvar#redraw(variables) abort
+  if exists('w:python_hl_lvar_match_id')
+    call s:delete_highlight(w:python_hl_lvar_match_id)
+  endif
+  if a:variables != []
+    call s:add_highlight(a:variables)
   endif
 endfunction
 
 
-function! s:add_highlight(vars)
-  "echo a:vars
+function! s:delete_highlight(match_id) abort
+  " must be greater than -1
+  if a:match_id < 0
+    return
+  endif
   try
-    syn clear pythonLocalVariables
-  catch /E28/
-    "E28: No such highlight group name: pythonLocalVariables
+    call matchdelete(a:match_id)
+  catch /E803:/
   endtry
-  exe 'syn keyword pythonLocalVariables '.a:vars
-  hi link pythonLocalVariables Special
+endfunction
+
+
+function! s:add_highlight(variables) abort
+  if get(b:, 'assignments', []) == a:variables
+    return
+  endif
+  let b:assignments = a:variables
+
+  let vv = map(a:variables, "'[^.''\"]\\zs'.v:val.'\\ze[^''\"]'")
+  let pat = join(vv, '\|')
+  "python print vim.eval('pat')
+  " lowest priority
+  let w:python_hl_lvar_match_id = matchadd(g:python_hl_lvar_hl_group, pat, 0)
 endfunction
