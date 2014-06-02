@@ -168,7 +168,8 @@ function! s:add_highlight(variables) abort
   endif
   let b:assignments = a:variables
 
-  let vv = map(a:variables, "'[^.''\"]\\zs'.v:val.'\\ze[^''\"]'")
+  "let vv = map(a:variables, "'[[:blank:]([{,]\\zs'.v:val.'\\ze[[:blank:].,)\\]}:$]'")
+  let vv = map(a:variables, "'\\zs\\<'.v:val.'\\ze\\>'")
   let pat = join(vv, '\|')
   "python print vim.eval('pat')
   " lowest priority
