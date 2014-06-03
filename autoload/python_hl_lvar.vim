@@ -98,7 +98,10 @@ function! python_hl_lvar#hl_lvar()
   if !g:enable_python_hl_lvar
     return
   endif
+  let l:l = line('.')
+  let l:c = col('.')
   let range_pos = python_hl_lvar#funcpos()
+  call cursor(l, c)
   let funcdef = getline(range_pos[1][1], range_pos[2][1])
 python << EOF
 import sys
@@ -132,7 +135,7 @@ try:
     #vim.command('let b:result = '.format(assignments))
 except Exception as e:
     # TODO: debug part
-    print e
+    # print e
     vim.command('let b:result = []')
 EOF
 
