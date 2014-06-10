@@ -7,9 +7,13 @@ endif
 
 let g:enable_python_hl_lvar = get(g:, 'enable_python_hl_lvar', 0)
 let g:python_hl_lvar_hl_group = get(g:, 'python_hl_lvar_hl_group', 'pythonLocalVariables')
+let g:python_hl_lvar_highlight_color = get(
+      \ g:,
+      \ 'python_hl_lvar_highlight_color',
+      \ 'guifg=palegreen3 gui=NONE ctermfg=114 cterm=NONE'
+      \ )
 
-"highlight pythonLocalVariables ctermbg=green guibg=green
-hi link pythonLocalVariables Special
+exe "highlight " . g:python_hl_lvar_hl_group . " " . g:python_hl_lvar_highlight_color
 " ================================================
 
 
