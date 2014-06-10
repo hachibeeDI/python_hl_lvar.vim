@@ -102,7 +102,9 @@ function! python_hl_lvar#hl_lvar()
   let l:c = col('.')
   let range_pos = python_hl_lvar#funcpos()
   call cursor(l, c)
-  let funcdef = getline(range_pos[1][1], range_pos[2][1])
+  let start_of_line = range_pos[1][1]
+  let end_of_line = range_pos[2][1]
+  let funcdef = getline(start_of_line, end_of_line)
 python << EOF
 import sys
 import ast
@@ -139,16 +141,20 @@ except Exception as e:
     vim.command('let b:result = []')
 EOF
 
-  call python_hl_lvar#redraw(b:result)
+  call python_hl_lvar#redraw({
+        \ 'variables': b:result,
+        \ 'start_of_line': start_of_line,
+        \ 'end_of_line': end_of_line,
+        \ })
 endfunction
 
 
-function! python_hl_lvar#redraw(variables) abort
+function! python_hl_lvar#redraw(result) abort
   if exists('w:python_hl_lvar_match_id')
     call s:delete_highlight(w:python_hl_lvar_match_id)
   endif
-  if a:variables != []
-    call s:add_highlight(a:variables)
+  if a:result.variables != []
+    call s:add_highlight(a:result)
   endif
 endfunction
 
@@ -165,16 +171,16 @@ function! s:delete_highlight(match_id) abort
 endfunction
 
 
-function! s:add_highlight(variables) abort
-  if get(b:, 'assignments', []) == a:variables
+function! s:add_highlight(result) abort
+  if get(b:, 'assignments', []) == a:result.variables
     return
   endif
-  let b:assignments = a:variables
+  let b:assignments = a:result.variables
 
-  "let vv = map(a:variables, "'[[:blank:]([{,]\\zs'.v:val.'\\ze[[:blank:].,)\\]}:$]'")
-  let vv = map(a:variables, "'\\zs\\<'.v:val.'\\ze\\>'")
+  let pat = "'\\%>" . (a:result['start_of_line'] - 1) . "l.\\%<" . (a:result['end_of_line'] + 1) . "l[[:blank:]([{,]\\zs\\<'.v:val.'\\ze\\>'"
+  let vv = map(b:assignments, pat)
   let pat = join(vv, '\|')
   "python print vim.eval('pat')
-  " lowest priority
-  let w:python_hl_lvar_match_id = matchadd(g:python_hl_lvar_hl_group, pat, 0)
+  " matchadd() priority -1 means 'hlsearch' will override the match.
+  let w:python_hl_lvar_match_id = matchadd(g:python_hl_lvar_hl_group, pat, -1)
 endfunction
