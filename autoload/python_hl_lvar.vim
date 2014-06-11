@@ -1,4 +1,10 @@
+function! python_hl_lvar#invoke_initialization()
+  let g:python_hl_lvar_verbose = get(g:, 'python_hl_lvar_verbose', 0)
+endfunction
 
+
+
+" TODO: rewrite
 function! python_hl_lvar#findfirstline()
     " Start at a nonblank line
     let l:cur_pos = getpos('.')
