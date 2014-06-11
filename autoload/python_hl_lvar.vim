@@ -110,45 +110,24 @@ function! python_hl_lvar#hl_lvar() abort
   call cursor(l, c)
   let start_of_line = range_pos[1][1]
   let end_of_line = range_pos[2][1]
-  let funcdef = getline(start_of_line, end_of_line)
-python << EOF
-import sys
-import ast
-from itertools import takewhile
+  if start_of_line == '' || end_of_line == ''
+    return
+  endif
 
-def extract_assignment(funcdef_lines):
-    if not func_def_lines:
-      return []
-    tabspace = len(list(takewhile(lambda x: x == ' ', func_def_lines[0])))
-    func_definition = '\n'.join([line[tabspace:] for line in func_def_lines])
-    definition_node = ast.walk(ast.parse(func_definition, mode='single').body[0])
-    next(definition_node)
-    result = []
-    result_add = result.extend
-    for z in definition_node:
-        if isinstance(z, ast.arguments):
-            v = [getattr(a, 'id', None) for a in z.args]
-            result_add(filter(bool, v))
-        if isinstance(z, ast.Assign):
-            v = [getattr(v, 'id', None) for v in z.targets]
-            result_add(filter(bool, v))
-    return result
-
-
-try:
-    func_def_lines = vim.eval('l:funcdef')
-    assignments = extract_assignment(func_def_lines)
-    cmd = 'let b:result = {0}'.format(repr(assignments))
-    vim.command(cmd)
-    #vim.command('let b:result = '.format(assignments))
-except Exception as e:
-    # TODO: debug part
-    # print e
-    vim.command('let b:result = []')
+  if exists('s:result')
+    unlet s:result
+  endif
+  " returns b:result
+  python << EOF
+from sys import path
+curd = vim.eval("g:python_hl_lvar_current_dir")
+if curd not in path: path.insert(0, curd)
+from python_hl_lvar import interface_for_vim
+interface_for_vim(vim.eval("start_of_line"), vim.eval("end_of_line"))
 EOF
 
   call python_hl_lvar#redraw({
-        \ 'variables': b:result,
+        \ 'variables': s:result,
         \ 'start_of_line': start_of_line,
         \ 'end_of_line': end_of_line,
         \ })

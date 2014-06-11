@@ -1,0 +1,58 @@
+# -*- coding: utf-8 -*-
+from __future__ import (print_function, division, absolute_import, unicode_literals, )
+
+from logging import (Formatter, getLogger, StreamHandler, DEBUG, NullHandler, )
+logger = getLogger(__name__)
+try:
+    import vim
+    if int(vim.eval('g:python_hl_lvar_verbose')):
+        handler = StreamHandler()
+    else:
+        handler = NullHandler()
+except ImportError:
+    handler = StreamHandler()
+handler.setFormatter(Formatter("%(levelname)s: [in %(funcName)s] '%(message)s'"))
+handler.setLevel(DEBUG)
+logger.setLevel(DEBUG)
+logger.addHandler(handler)
+
+
+import ast
+from itertools import takewhile
+
+
+def extract_assignment(funcdef_lines):
+    if not funcdef_lines:
+        return []
+    tabspace = len(list(takewhile(lambda x: x == ' ', funcdef_lines[0])))
+    func_definition = '\n'.join([line[tabspace:] for line in funcdef_lines])
+    definition_node = ast.walk(ast.parse(func_definition, mode='single').body[0])
+    next(definition_node)
+    result = []
+    result_add = result.extend
+    for z in definition_node:
+        if isinstance(z, ast.arguments):
+            v = [getattr(a, 'id', None) for a in z.args]
+            result_add(filter(bool, v))
+        if isinstance(z, ast.Assign):
+            v = [getattr(v, 'id', None) for v in z.targets]
+            result_add(filter(bool, v))
+    return result
+
+
+def interface_for_vim(start_of_line, end_of_line):
+    logger.debug(' '.join(('called', 'from:', start_of_line, 'to:', end_of_line, )))
+    func_definition_lines = vim.current.buffer[int(start_of_line) - 1:int(end_of_line)]
+    logger.debug('eval ->\n' + '\n'.join(func_definition_lines))
+    try:
+        assignments = extract_assignment(func_definition_lines)
+        cmd = 'let s:result = {0}'.format(repr(assignments))
+    except Exception as e:
+        logger.error(str(e))
+        cmd = 'let s:result = []'
+    vim.command(cmd)
+
+
+if __name__ == '__main__':
+    from sys import argv
+    interface_for_vim(argv[1], argv[2])
