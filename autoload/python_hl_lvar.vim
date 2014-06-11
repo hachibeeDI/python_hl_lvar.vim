@@ -100,7 +100,7 @@ endfunction
 
 "let g:enable_python_hl_lvar
 
-function! python_hl_lvar#hl_lvar()
+function! python_hl_lvar#hl_lvar() abort
   if !g:enable_python_hl_lvar
     return
   endif
