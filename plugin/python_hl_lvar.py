@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import (print_function, division, absolute_import, unicode_literals, )
 
+import sys
 from logging import (Formatter, getLogger, StreamHandler, DEBUG, NullHandler, )
 logger = getLogger(__name__)
 try:
@@ -16,27 +17,49 @@ handler.setLevel(DEBUG)
 logger.setLevel(DEBUG)
 logger.addHandler(handler)
 
+if sys.version_info < (3, 0, 0):
+    TEXT_TYPE = basestring
+else:
+    TEXT_TYPE = str
 
 import ast
 from itertools import takewhile
 
 
-def extract_assignment(funcdef_lines):
-    if not funcdef_lines:
+def _provide_style_for_definition(given):
+    if isinstance(given, TEXT_TYPE):
+        given = given.strip().splitlines()
+    tabspace = len(list(takewhile(lambda x: x == ' ', given[0])))
+    func_definition_exclude_tabspace = '\n'.join([line[tabspace:] for line in given])
+    # print(func_definition_exclude_tabspace)
+    return func_definition_exclude_tabspace
+
+
+def extract_assignment(given_funcdef):
+    if not given_funcdef:
         return []
-    tabspace = len(list(takewhile(lambda x: x == ' ', funcdef_lines[0])))
-    func_definition = '\n'.join([line[tabspace:] for line in funcdef_lines])
+    func_definition = _provide_style_for_definition(given_funcdef)
     definition_node = ast.walk(ast.parse(func_definition, mode='single').body[0])
     next(definition_node)
     result = []
     result_add = result.extend
-    for z in definition_node:
+    result_append = result.append
+    for z in definition_node:  # TODO: cleanup
+        # print(z)
         if isinstance(z, ast.arguments):
             v = [getattr(a, 'id', None) for a in z.args]
             result_add(filter(bool, v))
-        if isinstance(z, ast.Assign):
+        elif isinstance(z, ast.Assign):
             v = [getattr(v, 'id', None) for v in z.targets]
             result_add(filter(bool, v))
+        elif isinstance(z, ast.For):
+            if isinstance(z.target, ast.Name):
+                result_append(z.target.id)
+            elif isinstance(z.target, ast.Tuple):
+                result_add(elt.id for elt in z.target.elts)
+        elif isinstance(z, ast.With):
+            if z.optional_vars:
+                result_append(z.optional_vars.id)
     return result
 
 
