@@ -162,7 +162,7 @@ function! s:add_highlight(result) abort
   endif
   let b:assignments = a:result.variables
 
-  let pat = "'\\%>" . (a:result['start_of_line'] - 1) . "l.\\%<" . (a:result['end_of_line'] + 1) . "l[[:blank:]([{,]\\zs\\<'.v:val.'\\ze\\>'"
+  let pat = "'\\%>" . (a:result['start_of_line'] - 1) . "l.\\%<" . (a:result['end_of_line'] + 1) . "l[[:blank:]([{,=]\\zs\\<'.v:val.'\\ze\\>'"
   let vv = map(b:assignments, pat)
   let pat = join(vv, '\|')
   "python print vim.eval('pat')
