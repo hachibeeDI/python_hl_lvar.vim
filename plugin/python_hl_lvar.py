@@ -31,7 +31,8 @@ def _provide_style_for_definition(given):
         given = given.strip().splitlines()
     tabspace = len(list(takewhile(lambda x: x == ' ', given[0])))
     func_definition_exclude_tabspace = '\n'.join([line[tabspace:] for line in given])
-    # print(func_definition_exclude_tabspace)
+
+    logger.debug('highlight target -> \n' + func_definition_exclude_tabspace)
     return func_definition_exclude_tabspace
 
 

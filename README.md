@@ -4,7 +4,7 @@ Highlight local variables in function is under cursor.
 
 ## Version
 
-prototype
+0.0.1
 
 ## Requirements
 
