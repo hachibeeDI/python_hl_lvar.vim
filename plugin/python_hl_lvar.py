@@ -59,8 +59,12 @@ def extract_assignment(given_funcdef):
             elif isinstance(z.target, ast.Tuple):
                 result_add(elt.id for elt in z.target.elts)
         elif isinstance(z, ast.With):
-            if z.optional_vars:
+            # Python2
+            if hasattr(z, 'optional_vars') and z.optional_vars:
                 result_append(z.optional_vars.id)
+            else:
+                [result_append(i.optional_vars.id) for i in z.items if i.optional_vars]
+
     return result
 
 
