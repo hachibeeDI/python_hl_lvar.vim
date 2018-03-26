@@ -68,13 +68,14 @@ def interface_for_vim(start_of_line, end_of_line):
     logger.debug(' '.join(('called', 'from:', start_of_line, 'to:', end_of_line, )))
     func_definition_lines = vim.current.buffer[int(start_of_line) - 1:int(end_of_line)]
     logger.debug('eval ->\n' + '\n'.join(func_definition_lines))
+
+    # cmd = 'let s:result = {0}'.format(repr(assignments))
     try:
         assignments = extract_assignment(func_definition_lines)
-        cmd = 'let s:result = {0}'.format(repr(assignments))
+        return assignments
     except Exception as e:
         logger.error(str(e))
-        cmd = 'let s:result = []'
-    vim.command(cmd)
+        return []
 
 
 if __name__ == '__main__':

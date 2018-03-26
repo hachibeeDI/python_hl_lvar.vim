@@ -1,3 +1,6 @@
+let s:pycmd = has('python') && (!exists('g:py_hl_lvar_force_version') || g:py_hl_lvar_force_version != 3) ? ':py' : ':py3'
+
+
 function! python_hl_lvar#invoke_initialization()
   let g:python_hl_lvar_verbose = get(g:, 'python_hl_lvar_verbose', 0)
 endfunction
@@ -155,12 +158,20 @@ function! python_hl_lvar#hl_lvar() abort
     unlet s:result
   endif
   " returns b:result
-  python << EOF
+
+
+exec s:pycmd . ' << EOF'
+
 from sys import path
 curd = vim.eval("g:python_hl_lvar_current_dir")
-if curd not in path: path.insert(0, curd)
+if curd not in path:
+  path.insert(0, curd)
+
+import vim
 from python_hl_lvar import interface_for_vim
-interface_for_vim(vim.eval("start_of_line"), vim.eval("end_of_line"))
+parse_result = interface_for_vim(vim.eval("start_of_line"), vim.eval("end_of_line"))
+vim.command('let s:result = {0}'.format(repr(parse_result)))
+
 EOF
 
   call python_hl_lvar#redraw({
