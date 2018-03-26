@@ -98,6 +98,43 @@ function! python_hl_lvar#funcpos()
 endfunction
 
 
+function! python_hl_lvar#redraw(result) abort
+  if exists('w:python_hl_lvar_match_id')
+    call s:delete_highlight(w:python_hl_lvar_match_id)
+  endif
+  if a:result.variables != []
+    call s:add_highlight(a:result)
+  endif
+endfunction
+
+
+function! s:delete_highlight(match_id) abort
+  " must be greater than -1
+  if a:match_id < 0
+    return
+  endif
+  try
+    call matchdelete(a:match_id)
+  catch /E803:/
+  endtry
+endfunction
+
+
+function! s:add_highlight(result) abort
+  if get(b:, 'assignments', []) == a:result.variables
+    return
+  endif
+  let b:assignments = a:result.variables
+
+  let pat = "'\\%>" . (a:result['start_of_line'] - 1) . "l.\\%<" . (a:result['end_of_line'] + 1) . "l[[:blank:]([{,=]\\zs\\<'.v:val.'\\ze\\>'"
+  let vv = map(b:assignments, pat)
+  let pat = join(vv, '\|')
+  "python print vim.eval('pat')
+  " matchadd() priority -1 means 'hlsearch' will override the match.
+  let w:python_hl_lvar_match_id = matchadd(g:python_hl_lvar_hl_group, pat, -1)
+endfunction
+
+
 "let g:enable_python_hl_lvar
 
 function! python_hl_lvar#hl_lvar() abort
@@ -134,38 +171,3 @@ EOF
 endfunction
 
 
-function! python_hl_lvar#redraw(result) abort
-  if exists('w:python_hl_lvar_match_id')
-    call s:delete_highlight(w:python_hl_lvar_match_id)
-  endif
-  if a:result.variables != []
-    call s:add_highlight(a:result)
-  endif
-endfunction
-
-
-function! s:delete_highlight(match_id) abort
-  " must be greater than -1
-  if a:match_id < 0
-    return
-  endif
-  try
-    call matchdelete(a:match_id)
-  catch /E803:/
-  endtry
-endfunction
-
-
-function! s:add_highlight(result) abort
-  if get(b:, 'assignments', []) == a:result.variables
-    return
-  endif
-  let b:assignments = a:result.variables
-
-  let pat = "'\\%>" . (a:result['start_of_line'] - 1) . "l.\\%<" . (a:result['end_of_line'] + 1) . "l[[:blank:]([{,=]\\zs\\<'.v:val.'\\ze\\>'"
-  let vv = map(b:assignments, pat)
-  let pat = join(vv, '\|')
-  "python print vim.eval('pat')
-  " matchadd() priority -1 means 'hlsearch' will override the match.
-  let w:python_hl_lvar_match_id = matchadd(g:python_hl_lvar_hl_group, pat, -1)
-endfunction
